@@ -16,7 +16,7 @@ def write_log(message):
     os.makedirs(dir, exist_ok=True)
     file_path = os.path.join(dir, f'log_{datetime.now().strftime("%Y-%m-%d")}.txt')
     with open(file_path, 'a') as log_file:
-        log_file.write(str(message) + '\n')
+        log_file.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " + str(message) + '\n')
 
 def notify(message):
     print(message)

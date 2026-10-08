@@ -23,7 +23,6 @@ if object_id('tempdb..#alterations') is not null drop table #alterations
         acumulado,
         escala,
         case when dmm is null then '' else dmm end as dmm,
-        tipo_matriz,
         esquema_acumulado,
         ativo,
         CASE 
@@ -44,7 +43,6 @@ if object_id('tempdb..#alterations') is not null drop table #alterations
     and moedas <= 35
 ),
 
--- OS INDICADORES DA CTR_FIXOS ABAIXO DEVEM SER COLOCADOS APENAS NAS MATRIZES ONDE O TIPO_MATRIZ = OPERAÇÃO
 CTE_Fixos AS (
     SELECT * FROM (VALUES
         ('4',         '00:00:00',   0.0,   0.0,   0.0,   0.0),
@@ -73,7 +71,6 @@ CTE_Fixos AS (
 -- INDICADORES QUE DEFLACIONAM E QUANTO DEFLACIONAM
 CTE_Fixos_Especiais AS (
     SELECT
-        'OPERACIONAL' AS tipo_matriz,
         atributo,
         id_indicador AS indicador,
         meta,
@@ -86,7 +83,6 @@ CTE_Fixos_Especiais AS (
     UNION ALL
 
     SELECT 
-        m.tipo_matriz, 
         m.atributo, 
         249 AS indicador, 
         '0' AS meta, 
@@ -95,14 +91,12 @@ CTE_Fixos_Especiais AS (
         -90 AS meta4, 
         -90 AS meta5
     FROM base m
-    WHERE m.tipo_matriz IN ('OPERAÇÃO', 'OPERACIONAL')
-      AND m.atributo LIKE '%PETROBRAS SAUDE%'
+    WHERE m.atributo LIKE '%PETROBRAS SAUDE%'
       AND m.ativo IN (0, 1, 3)
 
     UNION ALL
 
     SELECT 
-        m.tipo_matriz, 
         m.atributo, 
         341  AS indicador, 
         '90' AS meta, 
@@ -111,13 +105,11 @@ CTE_Fixos_Especiais AS (
         0    AS meta4, 
         0    AS meta5
     FROM base m
-    WHERE m.tipo_matriz = 'OPERACIONAL'
-      AND m.ativo IN (0, 1, 3)
+    WHERE m.ativo IN (0, 1, 3)
 
     UNION ALL
 
     SELECT DISTINCT
-        b.tipo_matriz,
         b.atributo,
         277 AS id_indicador,
         '0' AS meta,
@@ -521,15 +513,13 @@ CTE_Fixos_Aplicados AS (
         f.ganho_g3_def,
         f.ganho_g4_def
     FROM (
-        SELECT DISTINCT atributo, tipo_matriz
+        SELECT DISTINCT atributo
         FROM base
         WHERE ativo IN (0,1,3)
     ) a
     CROSS JOIN CTE_Fixos f
     -- somente gerar combos para matrizes do tipo "OPERAÇÃO"
-    WHERE UPPER(a.tipo_matriz) LIKE 'OPERA%'
-      -- exclui 772/773 para atributos (MASTER / CNH / CEMIG SAUDE / DIA GROUP BH)
-      AND NOT (
+    WHERE NOT (
            f.id_indicador IN (772, 773)
            AND (
                a.atributo LIKE '%MASTER%'

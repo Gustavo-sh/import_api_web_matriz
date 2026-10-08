@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from telegram_config import notify_telegram
 import os
 
-load_dotenv(r"C:\Users\e.gustavo.santos.GRUPO_A&C\Documents\Github\import_api_web_matriz\.env")
+load_dotenv(r"C:\Users\e.gustavo.santos.GRUPO_A&C\Documents\GitHub\import_api_web_matriz\.env")
 
 def main():
     try:

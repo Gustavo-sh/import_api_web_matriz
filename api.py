@@ -38,9 +38,9 @@ def search_attribute(session, token, mes_ano, atributo):
 
     response_get = session.get('https://api.robbyson.com/goal/adminList', params=params, headers=headers_get, timeout=60)
 
-    notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " :: " + str(response_get.status_code) + " - Get do disable ::")
+    notify(":: " + str(response_get.status_code) + " - Get do disable ::")
     write_log(response_get.text)
-    notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+f" :: Descrição enviada neste get do disable: {mes_ano}, atributo: {atributo} ::")
+    notify(f":: Descrição enviada neste get do disable: {mes_ano}, atributo: {atributo} ::")
 
     if response_get.status_code != 200:
         raise Exception(response_get.text)
@@ -58,12 +58,12 @@ def disable_attribute(session, token, mes_ano, atributo):
         items = data["data"]["items"]
 
         if not items:
-            notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+f" :: Pulando o atributo {atributo} com descrição {mes_ano}, pois não encontrou nenhum item :: ")
+            notify(f":: Pulando o atributo {atributo} com descrição {mes_ano}, pois não encontrou nenhum item :: ")
             return None
 
         ids = [item["_id"] for item in items]
 
-        notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" :: IDs encontrados: " + ", ".join(ids) + " :: ")
+        notify(":: IDs encontrados: " + ", ".join(ids) + " ::")
 
         headers_post = {
             'accept': 'application/json, text/plain, */*',
@@ -88,7 +88,7 @@ def disable_attribute(session, token, mes_ano, atributo):
             }, timeout=60
         )
 
-        notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " :: " + str(response_disable.status_code) + " - Post do disable ::")
+        notify(":: " + str(response_disable.status_code) + " - Post do disable ::")
         write_log(response_disable.text)
 
         if response_disable.status_code != 200:
@@ -103,20 +103,20 @@ def process_pending_files(session, base_url, token, files):
     processed_dir = Path(__file__).resolve().parent / "processados"
     processed_dir.mkdir(parents=True, exist_ok=True)
 
-    notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + f" :: {len(files)} arquivo(s) pendente(s) encontrado(s) ::")
+    notify(f":: {len(files)} arquivo(s) pendente(s) encontrado(s) ::")
 
     for file_path in files:
 
-        notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ f" :: Iniciando processamento: {file_path.name} ::")
+        notify(f":: Iniciando processamento: {file_path.name} ::")
 
         try:
             import_file(session,base_url,file_path,token)
             destination = processed_dir / file_path.name
             shutil.move(str(file_path),str(destination))
-            notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + f" :: Arquivo processado com sucesso: {file_path.name} ::")
+            notify(f":: Arquivo processado com sucesso: {file_path.name} ::")
 
         except Exception as e:
-            notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + f" :: Erro ao processar {file_path.name}: {e} ::")
+            notify(f":: Erro ao processar {file_path.name}: {e} ::")
             raise
         
 def import_file(session, base_url, file_path, token):
@@ -125,7 +125,7 @@ def import_file(session, base_url, file_path, token):
         df = pd.read_excel(file_path, sheet_name="Plan1")
         mes_ano = datetime.now().strftime("%m/%Y")
         atributos = df["ATRIBUTOS"].drop_duplicates().tolist()
-        notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+f" :: Desativando os seguintes atributos: {len(atributos)} atributos em 10 segundos:\n{atributos} ::")
+        notify(f":: Desativando os seguintes atributos: {len(atributos)} atributos em 10 segundos:\n{atributos} ::")
         time.sleep(10)
         for atributo in atributos:
             disable_attribute(session, token, mes_ano, atributo)
@@ -145,11 +145,10 @@ def import_file(session, base_url, file_path, token):
         )
 
     if response.status_code != 200:
-        notify("\n" + str(response.status_code) + " - " + response.text)
+        notify(str(response.status_code) + " - " + response.text)
         raise Exception("Erro no import")
 
-    notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+f" :: Import (passo 1) realizado com sucesso - status code: {response.status_code} ::")
-    write_log("\n:: text do import ::\n" + response.text)
+    notify(f":: Import (passo 1) realizado com sucesso - status code: {response.status_code} ::")
 
     data = response.json()
 
@@ -171,11 +170,10 @@ def import_file(session, base_url, file_path, token):
     )
 
     if response_save.status_code != 200:
-        notify("\n" + str(response_save.status_code) + " - " + response_save.text)
+        notify(str(response_save.status_code) + " - " + response_save.text)
         raise Exception("Erro ao salvar")
 
     notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+f" :: Save importing cache (passo 2) realizado com sucesso - status code: {response_save.status_code} ::")
-    write_log("\n:: text do save importing cache ::\n" + response_save.text)
 
     ### PASSO 3
 
@@ -201,13 +199,13 @@ def import_file(session, base_url, file_path, token):
         notify(f"Tentativa {trys + 1} - status: {status}")
 
         if status.lower() == "done":
-            notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" :: Processamento concluído ::")
+            notify(":: Processamento concluído ::")
             break
         elif status.lower() == "error":
             
             notify(data["data"]["processingErrors"])
             
-            raise Exception("Erro no processamento \n")
+            raise Exception("Erro no processamento")
 
         trys += 1
         time.sleep(2)
@@ -226,13 +224,12 @@ def import_file(session, base_url, file_path, token):
     )
 
     if response_delete.status_code != 200:
-        notify("\n" + str(response_delete.status_code) + " - " + response_delete.text)
+        notify(str(response_delete.status_code) + " - " + response_delete.text)
         raise Exception("Erro ao deletar cache")
 
-    notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+f" :: Delete importing cache (passo 4) realizado com sucesso - status code: {response_delete.status_code} ::")
-    write_log("\n:: text do delete importing cache ::\n" + response_delete.text)
+    notify(f":: Delete importing cache (passo 4) realizado com sucesso - status code: {response_delete.status_code} ::")
 
-    notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" :: Envio Robbyson encerrado :: ")
+    notify(":: Envio Robbyson encerrado :: ")
 
 def import_api(username, password):
     try:
@@ -243,12 +240,12 @@ def import_api(username, password):
         files = sorted(pending_dir.glob("*.xls"),key=lambda file: file.name)
     
         if not files:
-            notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " :: Nenhum arquivo pendente encontrado ::")
+            notify(":: Nenhum arquivo pendente encontrado ::")
             return
 
         BASE_URL = "https://api.robbyson.com"
         
-        notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" :: Automacao rodando, aguarde... :: ")
+        notify(":: Automacao rodando, aguarde... ::")
 
         TOKEN = None
         
@@ -267,12 +264,12 @@ def import_api(username, password):
 
         try:
             search_attribute(session, TOKEN, '06/2026', 'TEST ATTRIBUTE') # to validate the session token
-            notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" :: Token obtido do json validado com sucesso ::")
+            notify(":: Token obtido do json validado com sucesso ::")
             
         except Exception as e:
+            notify(f"Erro no teste do token: {e}")
             if 'token' in str(e).lower() or 'session' in str(e).lower():
-                notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" :: Token do json expirado, obtendo um novo token :: ")
-                write_log("\n:: erro_token ::\n" + str(e))
+                notify(":: Token do json expirado, obtendo um novo token ::")
                 for i in range(3):
                     notify(f"Iniciando tentativa {i+1}/3 de obter a session key")
                     try:
@@ -281,7 +278,7 @@ def import_api(username, password):
                     except Exception:
                         if i == 2:
                             raise
-                        continue
+                        continue 
             else:
                 raise
 
@@ -300,5 +297,5 @@ def import_api(username, password):
         process_pending_files(session, BASE_URL, TOKEN, files)
 
     except Exception as e:
-        notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" :: Erro na import api: " + str(e) + " :: ")
+        notify(f":: Erro na import api: {str(e)} ::")
         raise
