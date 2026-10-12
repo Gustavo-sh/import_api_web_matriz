@@ -12,14 +12,14 @@ def main():
     try:
         importacao, alteracao = exec_generator()
         if importacao or alteracao:
-            notify(f"Gerando {len(importacao)+len(alteracao)} linhas para importações no total.")
+            notify(f":: Gerando {len(importacao)} linhas de importacoes e {len(alteracao)} linhas de alteracoes. ::")
             generate_files(importacao, alteracao)
         import_api("e.gustavo.santos@aec.com.br", os.getenv("PASSWORD"))
         update_importado_sistema_matriz()
-        notify("Processo de importação de matrizes finalizado com sucesso.")
+        notify(":: Processo de importação de matrizes finalizado com sucesso. ::")
         notify_telegram("Processo de importação de matrizes finalizado com sucesso.")
     except Exception as e:
-        notify(f"Erro geral no processo de importação de matrizes: {e}")
+        notify(f":: Erro geral no processo de importação de matrizes: {e} ::")
         notify_telegram(f"Erro geral no processo de importação de matrizes: {e}")
         raise
 

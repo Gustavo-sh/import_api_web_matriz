@@ -746,7 +746,7 @@ def exec_generator():
 
         except Exception as e:
             CONN.rollback()
-            notify(f"Erro ao gerar importacoes/alteracoes: {e}")
+            notify(f":: Erro ao gerar importacoes/alteracoes: {e} ::")
             raise
 
         finally:
@@ -773,7 +773,7 @@ def update_importado_sistema_matriz():
             CONN.commit()
         except Exception as e:
             CONN.rollback()
-            notify(f"Erro ao atualizar sistema matriz: {e}")
+            notify(f":: Erro ao atualizar sistema matriz: {e} ::")
         finally:
             if cur is not None:
                 cur.close()

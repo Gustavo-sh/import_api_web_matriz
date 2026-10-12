@@ -38,11 +38,11 @@ def search_attribute(session, token, mes_ano, atributo):
 
     response_get = session.get('https://api.robbyson.com/goal/adminList', params=params, headers=headers_get, timeout=60)
 
-    notify(":: " + str(response_get.status_code) + " - Get do disable ::")
-    write_log(response_get.text)
-    notify(f":: Descrição enviada neste get do disable: {mes_ano}, atributo: {atributo} ::")
+    notify(f":: {str(response_get.status_code)} - Get do disable ::")
+    notify(f":: Descricao enviada neste get do disable: {mes_ano}, atributo: {atributo} ::")
 
     if response_get.status_code != 200:
+        write_log(response_get.text)
         raise Exception(response_get.text)
 
     data = response_get.json()
@@ -51,19 +51,19 @@ def search_attribute(session, token, mes_ano, atributo):
 
 def disable_attribute(session, token, mes_ano, atributo):
 
-    for _ in range(3):
+    for _ in range(4):
 
         data = search_attribute(session, token, mes_ano, atributo)
         
         items = data["data"]["items"]
 
         if not items:
-            notify(f":: Pulando o atributo {atributo} com descrição {mes_ano}, pois não encontrou nenhum item :: ")
+            notify(f":: Pulando o atributo {atributo} com descricao {mes_ano}, pois não encontrou nenhum item :: ")
             return None
 
         ids = [item["_id"] for item in items]
 
-        notify(":: IDs encontrados: " + ", ".join(ids) + " ::")
+        notify(f":: Encontrados {len(ids)} indicadores para o atributo {atributo} em {mes_ano} ::")
 
         headers_post = {
             'accept': 'application/json, text/plain, */*',
@@ -88,10 +88,10 @@ def disable_attribute(session, token, mes_ano, atributo):
             }, timeout=60
         )
 
-        notify(":: " + str(response_disable.status_code) + " - Post do disable ::")
-        write_log(response_disable.text)
+        notify(f":: {str(response_disable.status_code)} - Post do disable ::")
 
         if response_disable.status_code != 200:
+            write_log(response_disable.text)
             raise Exception(response_disable.text)
 
         time.sleep(1)
@@ -104,6 +104,19 @@ def process_pending_files(session, base_url, token, files):
     processed_dir.mkdir(parents=True, exist_ok=True)
 
     notify(f":: {len(files)} arquivo(s) pendente(s) encontrado(s) ::")
+
+    for file_path in files:
+
+        file_name = file_path.name.lower()
+
+        if "alteracao" in file_name:
+            df = pd.read_excel(file_path, sheet_name="Plan1")
+            mes_ano = datetime.now().strftime("%m/%Y")
+            atributos = df["ATRIBUTOS"].drop_duplicates().tolist()
+            notify(f":: Desativando {len(atributos)} atributos do arquivo {file_name} em 10 segundos:\n{atributos} ::")
+            time.sleep(10)
+            for atributo in atributos:
+                disable_attribute(session, token, mes_ano, atributo)
 
     for file_path in files:
 
@@ -120,15 +133,6 @@ def process_pending_files(session, base_url, token, files):
             raise
         
 def import_file(session, base_url, file_path, token):
-
-    if "alteracao" in file_path.name.lower():
-        df = pd.read_excel(file_path, sheet_name="Plan1")
-        mes_ano = datetime.now().strftime("%m/%Y")
-        atributos = df["ATRIBUTOS"].drop_duplicates().tolist()
-        notify(f":: Desativando os seguintes atributos: {len(atributos)} atributos em 10 segundos:\n{atributos} ::")
-        time.sleep(10)
-        for atributo in atributos:
-            disable_attribute(session, token, mes_ano, atributo)
 
     ### PASSO 1
 
@@ -173,7 +177,7 @@ def import_file(session, base_url, file_path, token):
         notify(str(response_save.status_code) + " - " + response_save.text)
         raise Exception("Erro ao salvar")
 
-    notify(datetime.now().strftime("%Y-%m-%d %H:%M:%S")+f" :: Save importing cache (passo 2) realizado com sucesso - status code: {response_save.status_code} ::")
+    notify(f":: Save importing cache (passo 2) realizado com sucesso - status code: {response_save.status_code} ::")
 
     ### PASSO 3
 
@@ -196,15 +200,13 @@ def import_file(session, base_url, file_path, token):
 
         status = data["data"]["status"]
 
-        notify(f"Tentativa {trys + 1} - status: {status}")
+        notify(f":: Tentativa {trys + 1} - status: {status} ::")
 
         if status.lower() == "done":
-            notify(":: Processamento concluído ::")
+            notify(":: Processamento (passo 3) concluído ::")
             break
         elif status.lower() == "error":
-            
             notify(data["data"]["processingErrors"])
-            
             raise Exception("Erro no processamento")
 
         trys += 1
@@ -245,7 +247,7 @@ def import_api(username, password):
 
         BASE_URL = "https://api.robbyson.com"
         
-        notify(":: Automacao rodando, aguarde... ::")
+        notify(":: Iniciando obtencao e teste do token ::")
 
         TOKEN = None
         
@@ -267,11 +269,11 @@ def import_api(username, password):
             notify(":: Token obtido do json validado com sucesso ::")
             
         except Exception as e:
-            notify(f"Erro no teste do token: {e}")
+            notify(f":: Erro no teste do token: {e} ::")
             if 'token' in str(e).lower() or 'session' in str(e).lower():
                 notify(":: Token do json expirado, obtendo um novo token ::")
-                for i in range(3):
-                    notify(f"Iniciando tentativa {i+1}/3 de obter a session key")
+                for i in range(5):
+                    notify(f":: Iniciando tentativa {i+1}/5 de obter a session key ::")
                     try:
                         TOKEN = get_session_key(username, password)
                         break
@@ -297,5 +299,5 @@ def import_api(username, password):
         process_pending_files(session, BASE_URL, TOKEN, files)
 
     except Exception as e:
-        notify(f":: Erro na import api: {str(e)} ::")
+        notify(f":: Erro geral na parte api: {str(e)} ::")
         raise
