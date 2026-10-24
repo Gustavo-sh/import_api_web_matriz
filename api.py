@@ -278,8 +278,6 @@ def import_api(username, password):
                         TOKEN = get_session_key(username, password)
                         break
                     except Exception:
-                        if i == 2:
-                            raise
                         continue 
             else:
                 raise
