@@ -41,11 +41,26 @@ def get_session_key(username, password):
 
         driver.get("https://aec.robbyson.com/administracao/#/login/")
 
+        try:
+            session_key = generate_session_key(driver)
+            if session_key:
+                return session_key
+        except Exception:
+            pass
+
         wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div/form[1]/div/div/div[2]/div[1]/div/div/div/div/div[1]/div[3]/div/div/div/div[2]/div[2]/div/input[1]"))).send_keys(username) # usuario
         notify(":: Usuário preenchido :: ") 
         driver.find_element(By.XPATH, "/html/body/div/form[1]/div/div/div[2]/div[1]/div/div/div/div/div[1]/div[3]/div/div/div/div[4]/div/div/div/div/input").click() # avançar
         wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div/form[1]/div/div/div[2]/div[1]/div/div/div/div/div/div[3]/div/div[2]/div/div[3]/div/div[2]/input"))).send_keys(password) # senha
         notify(":: Senha preenchida :: ")
+
+        try:
+            session_key = generate_session_key(driver)
+            if session_key:
+                return session_key
+        except Exception:
+            pass
+        
         driver.find_element(By.XPATH, "/html/body/div/form[1]/div/div/div[2]/div[1]/div/div/div/div/div/div[3]/div/div[2]/div/div[5]/div/div/div/div/input").click() # avançar
         wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div/form/div/div/div[2]/div[1]/div/div/div/div/div/div[3]/div/div[2]/div/div[3]/div[2]/div/div/div[2]/input"))).send_keys(Keys.ENTER) # avançar
 
